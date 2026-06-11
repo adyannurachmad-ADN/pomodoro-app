@@ -5,7 +5,7 @@ import time
 # 0. KONFIGURASI HALAMAN
 # ==========================================
 st.set_page_config(
-    page_title="Life Balance Technic by Adyan.Dev", 
+    page_title="Life Balance by Adyan.Dev", 
     page_icon="⏱️", 
     layout="wide"
 )
@@ -55,7 +55,7 @@ if check_password():
     if "durasi_istirahat" not in st.session_state:
         st.session_state.durasi_istirahat = 5 * 60
 
-    # Kustomisasi CSS Spesial untuk Layar Blank Istirahat & Font Raksasa
+    # Kustomisasi CSS Spesial & INJEKSI JAVASCRIPT AUDIO BROWSER (Mengatasi Blokir Autoplay)
     st.markdown("""
         <style>
         .timer-kerja {
@@ -99,10 +99,36 @@ if check_password():
             letter-spacing: 2px;
         }
         </style>
+
+        <script>
+        // Fungsi Web Audio API untuk menghasilkan bunyi Beep murni secara lokal tanpa file eksternal
+        function bunyikanBeep() {
+            try {
+                var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                var oscillator = audioCtx.createOscillator();
+                var gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 880; // Frekuensi nada tinggi (A5)
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); // Volume 50%
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3); // Durasi bunyi 0.3 detik
+            } catch(e) {
+                console.log("AudioContext diblokir, butuh interaksi user klik pertama kali.");
+            }
+        }
+        
+        // Daftarkan fungsi ke window parent global agar bisa dipanggil dari sandbox iframe Streamlit
+        window.mainbunyikanBeep = bunyikanBeep;
+        </script>
     """, unsafe_allow_html=True)
 
-    # Link audio cadangan yang ringkas & kompatibel tinggi dengan browser (.mp3)
-    url_audio_beep = "https://www.soundjay.com/buttons/sounds/button-10.mp3"
+    # Wadah kosong khusus untuk memicu skrip audio otomatis
+    pemicu_audio = st.empty()
 
     # ------------------------------------------
     # JALANNYA PROGRAM BERDASARKAN MODE
@@ -112,25 +138,37 @@ if check_password():
     if st.session_state.pomo_state == "BREAK":
         layar_blank = st.empty()
         
+        # Penyesuaian teks dinamis berdasarkan durasi istirahat yang sedang aktif
+        if st.session_state.durasi_istirahat == 15 * 60:
+            tipe_istirahat = "LONG BREAK"
+            pesan_break = "Luar biasa! Nikmati istirahat panjang Anda sekarang."
+        else:
+            tipe_istirahat = "SHORT BREAK"
+            pesan_break = "Silakan sandarkan badan & rileks sejenak"
+        
         while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "BREAK":
             menit = st.session_state.waktu_tersisa // 60
             detik = st.session_state.waktu_tersisa % 60
-            tipe_istirahat = "SHORT BREAK" if st.session_state.durasi_istirahat == 5 * 60 else "LONG BREAK"
             
             layar_blank.markdown(f"""
                 <div class="blank-screen-break">
                     <p style="color: #10B981; font-size: 18px; letter-spacing: 5px;">☕ {tipe_istirahat}</p>
                     <h1 class="timer-break-raksasa">{menit:02d}:{detik:02d}</h1>
-                    <p class="sub-text-break">Silakan sandarkan badan & rileks sejenak</p>
+                    <p class="sub-text-break">{pesan_break}</p>
                 </div>
             """, unsafe_allow_html=True)
+            
+            # Bunyi beep aba-aba pada 5 detik terakhir masa istirahat
+            if st.session_state.waktu_tersisa <= 5:
+                pemicu_audio.markdown("<script>window.parent.mainbunyikanBeep();</script>", unsafe_allow_html=True)
             
             time.sleep(1)
             st.session_state.waktu_tersisa -= 1
 
+        # PERBAIKAN TOTAL: Begitu istirahat habis, langsung lempar kembali ke sesi FOCUS berikutnya secara otomatis!
         if st.session_state.waktu_tersisa <= 0 and st.session_state.pomo_state == "BREAK":
-            st.session_state.pomo_state = "IDLE"
-            st.session_state.waktu_tersisa = 25 * 60
+            st.session_state.pomo_state = "FOCUS"
+            st.session_state.waktu_tersisa = 25 * 60  # Kembalikan ke durasi kerja 25 menit
             st.balloons() 
             st.rerun()
 
@@ -145,10 +183,13 @@ if check_password():
             st.write("") 
             sub_kolom1, sub_kolom2 = st.columns(2)
             with sub_kolom1:
+                # Tombol deploy sekaligus berfungsi membuka segel (unlock) audio browser lewat interaksi klik pertama
                 if st.button("🚀 DEPLOY", type="primary", use_container_width=True):
                     if st.session_state.pomo_state == "IDLE":
                         st.session_state.pomo_state = "FOCUS"
                         st.session_state.waktu_tersisa = 25 * 60
+                        # Test bunyi sekali saat klik awal untuk memicu izin browser
+                        st.markdown("<script>window.parent.mainbunyikanBeep();</script>", unsafe_allow_html=True)
                         st.rerun()
             with sub_kolom2:
                 if st.button("🛑 STOP", type="secondary", use_container_width=True):
@@ -162,43 +203,37 @@ if check_password():
         if st.session_state.pomo_state == "FOCUS":
             st.info("🔴 Sesi Kerja Sedang Berjalan. Tetaplah Fokus.")
             tempat_timer = st.empty()
-            tempat_audio = st.empty()
             
             while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "FOCUS":
                 menit = st.session_state.waktu_tersisa // 60
                 detik = st.session_state.waktu_tersisa % 60
                 tempat_timer.markdown(f'<p class="timer-kerja">{menit:02d}:{detik:02d}</p>', unsafe_allow_html=True)
                 
-                # REPEATER BELL: Bunyi tepat di 5 detik terakhir (5, 4, 3, 2, 1)
+                # Bunyi Beep berulang pada 5 detik terakhir sesi kerja
                 if st.session_state.waktu_tersisa <= 5:
-                    # Menggunakan kombinasi audio HTML5 modern yang dipaksa reload per detik
-                    tempat_audio.markdown(
-                        f"""
-                        <iframe src="{url_audio_beep}" allow="autoplay" style="display:none"></iframe>
-                        <audio autoplay><source src="{url_audio_beep}" type="audio/mp3"></audio>
-                        """, 
-                        unsafe_allow_html=True
-                    )
+                    pemicu_audio.markdown("<script>window.parent.mainbunyikanBeep();</script>", unsafe_allow_html=True)
                 
                 time.sleep(1)
                 st.session_state.waktu_tersisa -= 1
                 
-            # Logika Otomatis Perpindahan Setelah 25 Menit Selesai
+            # Logika Otomatis Perpindahan Setelah 25 Menit Selesai Kerja
             if st.session_state.waktu_tersisa <= 0 and st.session_state.pomo_state == "FOCUS":
                 st.session_state.siklus_selesai += 1
                 
+                # Cek Modulo: Jika kelipatan 4, set ke istirahat panjang (15 Menit), sisanya istirahat pendek (5 Menit)
                 if st.session_state.siklus_selesai % 4 == 0:
                     st.session_state.durasi_istirahat = 15 * 60  
                 else:
                     st.session_state.durasi_istirahat = 5 * 60   
                 
+                # Langsung aktifkan mode break tanpa kembali ke mode IDLE
                 st.session_state.pomo_state = "BREAK"
                 st.session_state.waktu_tersisa = st.session_state.durasi_istirahat
                 st.rerun()
 
-        # Mode Siap / Diam (IDLE)
+        # Mode Siap / Diam (IDLE) - Hanya muncul saat aplikasi pertama kali dimuat
         else:
-            st.info("💡 Klik tombol **DEPLOY** di kanan atas untuk memulai siklus fokus 25 menit.")
+            st.info("💡 Klik tombol **DEPLOY** di kanan atas untuk memulai siklus fokus otomatis 25 menit.")
             menit = st.session_state.waktu_tersisa // 60
             detik = st.session_state.waktu_tersisa % 60
             st.markdown(f'<div style="text-align:center;"><p class="timer-kerja" style="color: #94A3B8;">{menit:02d}:{detik:02d}</p></div>', unsafe_allow_html=True)
