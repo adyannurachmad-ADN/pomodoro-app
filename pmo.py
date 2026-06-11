@@ -5,7 +5,7 @@ import time
 # 0. KONFIGURASI HALAMAN
 # ==========================================
 st.set_page_config(
-    page_title="Pomodoro - Life Balance Technic by Adyan.Dev", 
+    page_title="Life Balance Technic by Adyan.Dev", 
     page_icon="⏱️", 
     layout="wide"
 )
@@ -101,8 +101,8 @@ if check_password():
         </style>
     """, unsafe_allow_html=True)
 
-    # Wadah tersembunyi untuk memicu bunyi bell/beep lewat HTML5 Audio
-    wadah_suara = st.empty()
+    # Link audio cadangan yang ringkas & kompatibel tinggi dengan browser (.mp3)
+    url_audio_beep = "https://www.soundjay.com/buttons/sounds/button-10.mp3"
 
     # ------------------------------------------
     # JALANNYA PROGRAM BERDASARKAN MODE
@@ -162,19 +162,20 @@ if check_password():
         if st.session_state.pomo_state == "FOCUS":
             st.info("🔴 Sesi Kerja Sedang Berjalan. Tetaplah Fokus.")
             tempat_timer = st.empty()
+            tempat_audio = st.empty()
             
             while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "FOCUS":
                 menit = st.session_state.waktu_tersisa // 60
                 detik = st.session_state.waktu_tersisa % 60
                 tempat_timer.markdown(f'<p class="timer-kerja">{menit:02d}:{detik:02d}</p>', unsafe_allow_html=True)
                 
-                # REPEATER BELL: Bunyi di 5 detik terakhir menjelang waktu habis (sebagai reminder jelas)
+                # REPEATER BELL: Bunyi tepat di 5 detik terakhir (5, 4, 3, 2, 1)
                 if st.session_state.waktu_tersisa <= 5:
-                    wadah_suara.markdown(
-                        """
-                        <audio autoplay>
-                            <source src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" type="audio/ogg">
-                        </audio>
+                    # Menggunakan kombinasi audio HTML5 modern yang dipaksa reload per detik
+                    tempat_audio.markdown(
+                        f"""
+                        <iframe src="{url_audio_beep}" allow="autoplay" style="display:none"></iframe>
+                        <audio autoplay><source src="{url_audio_beep}" type="audio/mp3"></audio>
                         """, 
                         unsafe_allow_html=True
                     )
