@@ -1,252 +1,203 @@
 import streamlit as st
 import time
 
-# 1. KONFIGURASI HALAMAN
+# ==========================================
+# 0. KONFIGURASI HALAMAN
+# ==========================================
 st.set_page_config(
-    page_title="Pomodoro Studio by 4dy4n.Dev",
-    page_icon="⏱️",
-    layout="centered"
+    page_title="Pomodoro - Life Balance Technic by Adyan.Dev", 
+    page_icon="⏱️", 
+    layout="wide"
 )
 
 # ==========================================
-# INISIALISASI STATE (Manajemen Memori RAM)
+# 1. SISTEM KEAMANAN (LOGIN PASSWORD)
 # ==========================================
-if "current_time" not in st.session_state:
-    st.session_state.current_time = 25 * 60
-if "timer_running" not in st.session_state:
-    st.session_state.timer_running = False
-if "session_type" not in st.session_state:
-    st.session_state.session_type = "Fokus Kerja"
+def check_password():
+    if "password_correct" not in st.session_state:
+        st.session_state.password_correct = False
 
-# Kontainer dinamis tunggal untuk memisahkan rendering
-blank_container = st.empty()
+    if st.session_state.password_correct:
+        return True
 
-# ==========================================
-# CUSTOM CSS (STRUKTUR BASE TEMA GELAP)
-# ==========================================
-st.markdown("""
-    <style>
-    .stApp {
-        background-color: #12161a !important;
-        color: #e3e8ed !important;
-    }
-    .stDeployButton { display:none; }
-    footer { visibility: hidden; }
+    st.markdown("<h2 style='text-align: center; margin-top: 50px;'>🔒 Akses Terbatas</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: gray;'>Silakan masukkan password untuk mengakses Aplikasi Pomodoro</p>", unsafe_allow_html=True)
     
-    .timer-display {
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 6rem;
-        font-weight: bold;
-        color: #00f0ff;
-        text-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
-        text-align: center;
-        background-color: #1a2129;
-        border: 1px solid #2d3846;
-        padding: 15px;
-        border-radius: 18px;
-        margin: 20px 0;
-    }
-    
-    h1, h2, h3, h4, h5, h6, p, span {
-        color: #e3e8ed !important;
-    }
-    
-    .stButton>button {
-        background-color: #1a2129 !important;
-        color: #e3e8ed !important;
-        border: 1px solid #2d3846 !important;
-        border-radius: 10px !important;
-    }
-    .stButton>button:hover {
-        border-color: #00f0ff !important;
-        color: #00f0ff !important;
-    }
-
-    /* ──► GAYA LOCK SCREEN UTAMA (Z-INDEX ABSOLUT) ◄── */
-    .cyber-blank-overlay {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100vw; height: 100vh;
-        background-color: #000000 !important;
-        z-index: 999999 !important;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        font-family: 'Courier New', Courier, monospace;
-    }
-    
-    .blank-status {
-        font-size: 2vw;
-        color: #ffffff !important;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        margin-bottom: 10px;
-    }
-    
-    .mega-countdown {
-        font-size: 14vw;
-        font-weight: bold;
-        color: #00f0ff !important;
-        text-shadow: 0 0 35px rgba(0, 240, 255, 0.9), 0 0 10px rgba(0, 240, 255, 0.6);
-        line-height: 1;
-        margin-bottom: 20px;
-    }
-    
-    .blank-instruction {
-        font-size: 1.5vw;
-        color: #888888 !important;
-        letter-spacing: 1px;
-    }
-    
-    .top-right-panel {
-        position: absolute;
-        top: 30px;
-        right: 40px;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-    .btn-stop {
-        border: 2px solid #ffffff !important;
-        color: #ffffff !important;
-        background: transparent;
-        padding: 8px 18px;
-        border-radius: 8px;
-        font-weight: bold;
-        font-size: 14px;
-        letter-spacing: 1px;
-    }
-    .btn-deploy {
-        border: 2px solid #00f0ff !important;
-        color: #00f0ff !important;
-        background: transparent;
-        padding: 8px 18px;
-        border-radius: 8px;
-        font-weight: bold;
-        font-size: 14px;
-        letter-spacing: 1px;
-        box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
-    }
-    .divider-dots {
-        color: #666666 !important;
-        font-weight: bold;
-        font-size: 20px;
-    }
-    </style>
-""", unsafe_allow_html=True)
+    _, kol_tengah, _ = st.columns([1, 2, 1])
+    with kol_tengah:
+        st.write("---")
+        password = st.text_input("Password Akses:", type="password")
+        tombol_masuk = st.button("Masuk Aplikasi", use_container_width=True)
+        
+        if tombol_masuk:
+            if password == "#4dy4n#": 
+                st.session_state.password_correct = True
+                st.success("Login Berhasil!")
+                time.sleep(0.5)
+                st.rerun()
+            else:
+                st.error("❌ Password salah!")
+        st.write("---")
+    return False
 
 # ==========================================
-# ANTARMUKA MODE NORMAL (MENU DASHBOARD)
+# 2. PROGRAM UTAMA
 # ==========================================
-if not ("Istirahat" in st.session_state.session_type and st.session_state.timer_running):
-    st.title("⏱️ Pomodoro Studio")
-    st.write("Kelola ritme kerja dan relaksasi Anda dengan antarmuka gelap yang nyaman di mata.")
-    st.divider()
-
-    col_mode1, col_mode2, col_mode3 = st.columns(3)
-    with col_mode1:
-        if st.button("🎯 Sesi Fokus (25 Menit)", key="fokus_btn"):
-            st.session_state.current_time = 25 * 60
-            st.session_state.session_type = "Fokus Kerja"
-            st.session_state.timer_running = False
-            st.rerun()
-    with col_mode2:
-        if st.button("☕ Istirahat Pendek (5 Menit)", key="rehat_p_btn"):
-            st.session_state.current_time = 5 * 60
-            st.session_state.session_type = "Istirahat Pendek"
-            st.session_state.timer_running = False
-            st.rerun()
-    with col_mode3:
-        if st.button("🌳 Istirahat Panjang (15 Menit)", key="rehat_j_btn"):
-            st.session_state.current_time = 15 * 60
-            st.session_state.session_type = "Istirahat Panjang"
-            st.session_state.timer_running = False
-            st.rerun()
-
-    st.subheader(f"Status Sesi: {st.session_state.session_type}")
+if check_password():
     
-    col_ctrl1, col_ctrl2 = st.columns(2)
-    with col_ctrl1:
-        if st.button("▶️ Mulai Sesi", key="start_btn"): 
-            st.session_state.timer_running = True
-            st.rerun()
-    with col_ctrl2:
-        if st.button("⏸️ Jeda (Pause)", key="pause_btn"): 
-            st.session_state.timer_running = False
-            st.rerun()
+    # Inisialisasi State Aplikasi
+    if "pomo_state" not in st.session_state:
+        st.session_state.pomo_state = "IDLE"  # IDLE, FOCUS, BREAK
+    if "waktu_tersisa" not in st.session_state:
+        st.session_state.waktu_tersisa = 25 * 60
+    if "siklus_selesai" not in st.session_state:
+        st.session_state.siklus_selesai = 0  
+    if "durasi_istirahat" not in st.session_state:
+        st.session_state.durasi_istirahat = 5 * 60
 
-# ==========================================
-# LOGIKA INTI SIKLUS WAKTU (WHILE LOOP)
-# ==========================================
-while st.session_state.timer_running and st.session_state.current_time > 0:
-    mins, secs = divmod(st.session_state.current_time, 60)
+    # Kustomisasi CSS Spesial untuk Layar Blank Istirahat & Font Raksasa
+    st.markdown("""
+        <style>
+        .timer-kerja {
+            font-size: 80px !important;
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            color: #EF4444;
+            margin: 20px 0;
+        }
+        
+        /* GAYA BLANK SCREEN TOTAL SAAT ISTIRAHAT */
+        .blank-screen-break {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #090D16; 
+            z-index: 9999; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* FONT RAKSASA DI TENGAH LAYAR */
+        .timer-break-raksasa {
+            font-size: 30vh !important; 
+            font-weight: 100; 
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #10B981; 
+            margin: 0;
+            line-height: 1;
+        }
+        
+        .sub-text-break {
+            font-size: 24px;
+            color: #64748B;
+            margin-top: 20px;
+            letter-spacing: 2px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Wadah tersembunyi untuk memicu bunyi bell/beep lewat HTML5 Audio
+    wadah_suara = st.empty()
+
+    # ------------------------------------------
+    # JALANNYA PROGRAM BERDASARKAN MODE
+    # ------------------------------------------
     
-    if "Istirahat" in st.session_state.session_type:
-        blank_container.markdown(f"""
-            <div class="cyber-blank-overlay">
-                <div class="top-right-panel">
-                    <button class="btn-stop">🏃 STOP</button>
-                    <span class="divider-dots">:</span>
-                    <button class="btn-deploy">🚀 DEPLOY</button>
+    # KONDISI A: JIKA MASUK MODE ISTIRAHAT (BREAK) -> LAYAR JADI BLANK TOTAL
+    if st.session_state.pomo_state == "BREAK":
+        layar_blank = st.empty()
+        
+        while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "BREAK":
+            menit = st.session_state.waktu_tersisa // 60
+            detik = st.session_state.waktu_tersisa % 60
+            tipe_istirahat = "SHORT BREAK" if st.session_state.durasi_istirahat == 5 * 60 else "LONG BREAK"
+            
+            layar_blank.markdown(f"""
+                <div class="blank-screen-break">
+                    <p style="color: #10B981; font-size: 18px; letter-spacing: 5px;">☕ {tipe_istirahat}</p>
+                    <h1 class="timer-break-raksasa">{menit:02d}:{detik:02d}</h1>
+                    <p class="sub-text-break">Silakan sandarkan badan & rileks sejenak</p>
                 </div>
-                <div class="blank-status">SESSION: {st.session_state.session_type.upper()} ACTIVE 🔔</div>
-                <div class="mega-countdown">{mins:02d}:{secs:02d}</div>
-                <div class="blank-instruction">Pejamkan mata sejenak...</div>
-            </div>
-        """, unsafe_allow_html=True)
-    else:
-        blank_container.markdown(f'<div class="timer-display">{mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
-        
-    time.sleep(1)
-    st.session_state.current_time -= 1
-    
-    # TRANSISI MANAJEMEN WAKTU HABIS
-    if st.session_state.current_time == 0:
-        st.session_state.timer_running = False
-        blank_container.empty() 
-        
-        if st.session_state.session_type == "Fokus Kerja":
-            # ──► INTERSEPTOR AUDIO: Pemicu Efek Bunyi Alarm 5 Kali ◄──
-            # Membuat sintaks Audio Sintetis Web browser (Frekuensi 800Hz selama 0.15 detik sebanyak 5 putaran)
-            st.components.v1.html("""
-                <script>
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                let count = 0;
-                function playBeep() {
-                    if(count >= 5) return;
-                    const oscillator = audioCtx.createOscillator();
-                    const gainNode = audioCtx.createGain();
-                    oscillator.type = 'sine';
-                    oscillator.frequency.value = 800; 
-                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-                    oscillator.start();
-                    oscillator.stop(audioCtx.currentTime + 0.15);
-                    count++;
-                    setTimeout(playBeep, 400); // Jeda antar bunyi bip (400ms)
-                }
-                playBeep();
-                </script>
-            """, height=0, width=0)
+            """, unsafe_allow_html=True)
             
-            # Berikan waktu 2 detik agar browser menyelesaikan putaran lagunya sebelum pindah screen
-            time.sleep(2)
-            
-            st.session_state.session_type = "Istirahat Pendek"
-            st.session_state.current_time = 5 * 60
-            st.session_state.timer_running = True 
-        else:
-            st.session_state.session_type = "Fokus Kerja"
-            st.session_state.current_time = 25 * 60
-            st.session_state.timer_running = False 
-            st.balloons()
-            
-        st.rerun()
+            time.sleep(1)
+            st.session_state.waktu_tersisa -= 1
 
-# Tampilan Kondisi Jeda / Statis (Saat posisi Timer Berhenti)
-if not ("Istirahat" in st.session_state.session_type and st.session_state.timer_running):
-    mins, secs = divmod(st.session_state.current_time, 60)
-    blank_container.markdown(f'<div class="timer-display">{mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
+        if st.session_state.waktu_tersisa <= 0 and st.session_state.pomo_state == "BREAK":
+            st.session_state.pomo_state = "IDLE"
+            st.session_state.waktu_tersisa = 25 * 60
+            st.balloons() 
+            st.rerun()
+
+    # KONDISI B: MODE STANDBY ATAU MODE KERJA FOKUS (Tampilan Menu Normal)
+    else:
+        kolom_judul, kolom_aksi = st.columns([3, 1])
+        with kolom_judul:
+            st.title("⏱️ Pomodoro Timer")
+            st.caption(f"Life Balance Technic | Siklus Fokus Berhasil: {st.session_state.siklus_selesai}")
+            
+        with kolom_aksi:
+            st.write("") 
+            sub_kolom1, sub_kolom2 = st.columns(2)
+            with sub_kolom1:
+                if st.button("🚀 DEPLOY", type="primary", use_container_width=True):
+                    if st.session_state.pomo_state == "IDLE":
+                        st.session_state.pomo_state = "FOCUS"
+                        st.session_state.waktu_tersisa = 25 * 60
+                        st.rerun()
+            with sub_kolom2:
+                if st.button("🛑 STOP", type="secondary", use_container_width=True):
+                    st.session_state.pomo_state = "IDLE"
+                    st.session_state.waktu_tersisa = 25 * 60
+                    st.rerun()
+
+        st.write("---")
+
+        # Proses Countdown Mode Fokus Kerja
+        if st.session_state.pomo_state == "FOCUS":
+            st.info("🔴 Sesi Kerja Sedang Berjalan. Tetaplah Fokus.")
+            tempat_timer = st.empty()
+            
+            while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "FOCUS":
+                menit = st.session_state.waktu_tersisa // 60
+                detik = st.session_state.waktu_tersisa % 60
+                tempat_timer.markdown(f'<p class="timer-kerja">{menit:02d}:{detik:02d}</p>', unsafe_allow_html=True)
+                
+                # REPEATER BELL: Bunyi di 5 detik terakhir menjelang waktu habis (sebagai reminder jelas)
+                if st.session_state.waktu_tersisa <= 5:
+                    wadah_suara.markdown(
+                        """
+                        <audio autoplay>
+                            <source src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" type="audio/ogg">
+                        </audio>
+                        """, 
+                        unsafe_allow_html=True
+                    )
+                
+                time.sleep(1)
+                st.session_state.waktu_tersisa -= 1
+                
+            # Logika Otomatis Perpindahan Setelah 25 Menit Selesai
+            if st.session_state.waktu_tersisa <= 0 and st.session_state.pomo_state == "FOCUS":
+                st.session_state.siklus_selesai += 1
+                
+                if st.session_state.siklus_selesai % 4 == 0:
+                    st.session_state.durasi_istirahat = 15 * 60  
+                else:
+                    st.session_state.durasi_istirahat = 5 * 60   
+                
+                st.session_state.pomo_state = "BREAK"
+                st.session_state.waktu_tersisa = st.session_state.durasi_istirahat
+                st.rerun()
+
+        # Mode Siap / Diam (IDLE)
+        else:
+            st.info("💡 Klik tombol **DEPLOY** di kanan atas untuk memulai siklus fokus 25 menit.")
+            menit = st.session_state.waktu_tersisa // 60
+            detik = st.session_state.waktu_tersisa % 60
+            st.markdown(f'<div style="text-align:center;"><p class="timer-kerja" style="color: #94A3B8;">{menit:02d}:{detik:02d}</p></div>', unsafe_allow_html=True)
