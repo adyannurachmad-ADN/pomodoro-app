@@ -47,7 +47,7 @@ if check_password():
     
     # Inisialisasi State Aplikasi
     if "pomo_state" not in st.session_state:
-        st.session_state.pomo_state = "IDLE"  # IDLE, FOCUS, BREAK
+        st.session_state.pomo_state = "IDLE" 
     if "waktu_tersisa" not in st.session_state:
         st.session_state.waktu_tersisa = 25 * 60
     if "siklus_selesai" not in st.session_state:
@@ -55,125 +55,110 @@ if check_password():
     if "durasi_istirahat" not in st.session_state:
         st.session_state.durasi_istirahat = 5 * 60
 
-    # Kustomisasi CSS Spesial & INJEKSI JAVASCRIPT AUDIO BROWSER (Mengatasi Blokir Autoplay)
-    st.markdown("""
+    # Link Animasi Alam (GIF) - Aliran air sungai pegunungan yang menenangkan
+    url_animasi_air = "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3M5dzR0bm5jM2ZpYndhZ3N0bm9mY3ZsczB0Z3R4dzR0bm5jM2ZpYndhZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YmYAMDycV5FzO/giphy.gif"
+
+    # Kustomisasi CSS Spesial (Layar Istirahat dengan Animasi)
+    st.markdown(f"""
         <style>
-        .timer-kerja {
+        .timer-kerja {{
             font-size: 80px !important;
             font-weight: bold;
             font-family: 'Courier New', Courier, monospace;
             text-align: center;
             color: #EF4444;
             margin: 20px 0;
-        }
+        }}
         
-        /* GAYA BLANK SCREEN TOTAL SAAT ISTIRAHAT */
-        .blank-screen-break {
+        /* GAYA LAYAR ISTIRAHAT DENGAN ANIMASI ALAM */
+        .blank-screen-break {{
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #090D16; 
+            /* Lapisan gelap (overlay) agar angka timer tetap terbaca jelas di atas animasi */
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                        url('{url_animasi_air}');
+            background-size: cover;
+            background-position: center;
             z-index: 9999; 
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-        }
+            color: white;
+        }}
         
-        /* FONT RAKSASA DI TENGAH LAYAR */
-        .timer-break-raksasa {
-            font-size: 30vh !important; 
-            font-weight: 100; 
+        .timer-break-raksasa {{
+            font-size: 25vh !important; 
+            font-weight: 200; 
             font-family: 'Helvetica Neue', Arial, sans-serif;
             color: #10B981; 
             margin: 0;
             line-height: 1;
-        }
+            text-shadow: 0px 0px 30px rgba(0, 0, 0, 0.8);
+        }}
         
-        .sub-text-break {
+        .sub-text-break {{
             font-size: 24px;
-            color: #64748B;
+            color: #F8FAFC;
             margin-top: 20px;
-            letter-spacing: 2px;
-        }
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 10px rgba(0,0,0,1);
+            text-transform: uppercase;
+        }}
         </style>
-
-        <script>
-        // Fungsi Web Audio API untuk menghasilkan bunyi Beep murni secara lokal tanpa file eksternal
-        function bunyikanBeep() {
-            try {
-                var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                var oscillator = audioCtx.createOscillator();
-                var gainNode = audioCtx.createGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.value = 880; // Frekuensi nada tinggi (A5)
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); // Volume 50%
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.3); // Durasi bunyi 0.3 detik
-            } catch(e) {
-                console.log("AudioContext diblokir, butuh interaksi user klik pertama kali.");
-            }
-        }
-        
-        // Daftarkan fungsi ke window parent global agar bisa dipanggil dari sandbox iframe Streamlit
-        window.mainbunyikanBeep = bunyikanBeep;
-        </script>
     """, unsafe_allow_html=True)
 
-    # Wadah kosong khusus untuk memicu skrip audio otomatis
+    # URL Suara Aliran Air Pilihan Anda (Opsi A: URL Langsung)
+    url_suara_air = "https://www.soundjay.com/nature/sounds/stream-3.mp3"
+
     pemicu_audio = st.empty()
 
     # ------------------------------------------
     # JALANNYA PROGRAM BERDASARKAN MODE
     # ------------------------------------------
     
-    # KONDISI A: JIKA MASUK MODE ISTIRAHAT (BREAK) -> LAYAR JADI BLANK TOTAL
     if st.session_state.pomo_state == "BREAK":
         layar_blank = st.empty()
         
-        # Penyesuaian teks dinamis berdasarkan durasi istirahat yang sedang aktif
-        if st.session_state.durasi_istirahat == 15 * 60:
-            tipe_istirahat = "LONG BREAK"
-            pesan_break = "Luar biasa! Nikmati istirahat panjang Anda sekarang."
-        else:
-            tipe_istirahat = "SHORT BREAK"
-            pesan_break = "Silakan sandarkan badan & rileks sejenak"
+        # Tentukan judul berdasarkan durasi (Short/Long Break)
+        tipe_break = "LONG BREAK" if st.session_state.durasi_istirahat == 15 * 60 else "SHORT BREAK"
+        pesan_break = "Saatnya istirahat panjang" if tipe_break == "LONG BREAK" else "Rileks sejenak & ambil nafas"
         
         while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "BREAK":
             menit = st.session_state.waktu_tersisa // 60
             detik = st.session_state.waktu_tersisa % 60
             
+            # Menampilkan Layar Animasi Air + Timer Raksasa
             layar_blank.markdown(f"""
                 <div class="blank-screen-break">
-                    <p style="color: #10B981; font-size: 18px; letter-spacing: 5px;">☕ {tipe_istirahat}</p>
+                    <p style="color: #10B981; font-size: 18px; letter-spacing: 5px; font-weight: bold;">☕ {tipe_break}</p>
                     <h1 class="timer-break-raksasa">{menit:02d}:{detik:02d}</h1>
                     <p class="sub-text-break">{pesan_break}</p>
                 </div>
             """, unsafe_allow_html=True)
             
-            # Bunyi beep aba-aba pada 5 detik terakhir masa istirahat
+            # Pemicu suara air di 5 detik terakhir istirahat
             if st.session_state.waktu_tersisa <= 5:
-                pemicu_audio.markdown("<script>window.parent.mainbunyikanBeep();</script>", unsafe_allow_html=True)
+                pemicu_audio.markdown(
+                    f"""<iframe src="{url_suara_air}" allow="autoplay" style="display:none"></iframe>
+                        <audio autoplay><source src="{url_suara_air}" type="audio/mp3"></audio>""", 
+                    unsafe_allow_html=True
+                )
             
             time.sleep(1)
             st.session_state.waktu_tersisa -= 1
 
-        # PERBAIKAN TOTAL: Begitu istirahat habis, langsung lempar kembali ke sesi FOCUS berikutnya secara otomatis!
-        if st.session_state.waktu_tersisa <= 0 and st.session_state.pomo_state == "BREAK":
+        if st.session_state.waktu_tersisa <= 0:
             st.session_state.pomo_state = "FOCUS"
-            st.session_state.waktu_tersisa = 25 * 60  # Kembalikan ke durasi kerja 25 menit
+            st.session_state.waktu_tersisa = 25 * 60
             st.balloons() 
             st.rerun()
 
-    # KONDISI B: MODE STANDBY ATAU MODE KERJA FOKUS (Tampilan Menu Normal)
     else:
+        # MODE FOKUS / STANDBY
         kolom_judul, kolom_aksi = st.columns([3, 1])
         with kolom_judul:
             st.title("⏱️ Pomodoro Timer")
@@ -181,17 +166,15 @@ if check_password():
             
         with kolom_aksi:
             st.write("") 
-            sub_kolom1, sub_kolom2 = st.columns(2)
-            with sub_kolom1:
-                # Tombol deploy sekaligus berfungsi membuka segel (unlock) audio browser lewat interaksi klik pertama
+            sub1, sub2 = st.columns(2)
+            with sub1:
                 if st.button("🚀 DEPLOY", type="primary", use_container_width=True):
                     if st.session_state.pomo_state == "IDLE":
                         st.session_state.pomo_state = "FOCUS"
                         st.session_state.waktu_tersisa = 25 * 60
-                        # Test bunyi sekali saat klik awal untuk memicu izin browser
-                        st.markdown("<script>window.parent.mainbunyikanBeep();</script>", unsafe_allow_html=True)
+                        st.markdown(f'<iframe src="{url_suara_air}" allow="autoplay" style="display:none"></iframe>', unsafe_allow_html=True)
                         st.rerun()
-            with sub_kolom2:
+            with sub2:
                 if st.button("🛑 STOP", type="secondary", use_container_width=True):
                     st.session_state.pomo_state = "IDLE"
                     st.session_state.waktu_tersisa = 25 * 60
@@ -199,7 +182,6 @@ if check_password():
 
         st.write("---")
 
-        # Proses Countdown Mode Fokus Kerja
         if st.session_state.pomo_state == "FOCUS":
             st.info("🔴 Sesi Kerja Sedang Berjalan. Tetaplah Fokus.")
             tempat_timer = st.empty()
@@ -209,31 +191,25 @@ if check_password():
                 detik = st.session_state.waktu_tersisa % 60
                 tempat_timer.markdown(f'<p class="timer-kerja">{menit:02d}:{detik:02d}</p>', unsafe_allow_html=True)
                 
-                # Bunyi Beep berulang pada 5 detik terakhir sesi kerja
+                # Suara air berbunyi di 5 detik terakhir kerja (Penanda masuk istirahat)
                 if st.session_state.waktu_tersisa <= 5:
-                    pemicu_audio.markdown("<script>window.parent.mainbunyikanBeep();</script>", unsafe_allow_html=True)
+                    pemicu_audio.markdown(
+                        f"""<iframe src="{url_suara_air}" allow="autoplay" style="display:none"></iframe>
+                            <audio autoplay><source src="{url_suara_air}" type="audio/mp3"></audio>""", 
+                        unsafe_allow_html=True
+                    )
                 
                 time.sleep(1)
                 st.session_state.waktu_tersisa -= 1
                 
-            # Logika Otomatis Perpindahan Setelah 25 Menit Selesai Kerja
-            if st.session_state.waktu_tersisa <= 0 and st.session_state.pomo_state == "FOCUS":
+            if st.session_state.waktu_tersisa <= 0:
                 st.session_state.siklus_selesai += 1
-                
-                # Cek Modulo: Jika kelipatan 4, set ke istirahat panjang (15 Menit), sisanya istirahat pendek (5 Menit)
-                if st.session_state.siklus_selesai % 4 == 0:
-                    st.session_state.durasi_istirahat = 15 * 60  
-                else:
-                    st.session_state.durasi_istirahat = 5 * 60   
-                
-                # Langsung aktifkan mode break tanpa kembali ke mode IDLE
+                st.session_state.durasi_istirahat = 15 * 60 if st.session_state.siklus_selesai % 4 == 0 else 5 * 60
                 st.session_state.pomo_state = "BREAK"
                 st.session_state.waktu_tersisa = st.session_state.durasi_istirahat
                 st.rerun()
-
-        # Mode Siap / Diam (IDLE) - Hanya muncul saat aplikasi pertama kali dimuat
         else:
-            st.info("💡 Klik tombol **DEPLOY** di kanan atas untuk memulai siklus fokus otomatis 25 menit.")
+            st.info("💡 Klik tombol **DEPLOY** untuk memulai siklus fokus otomatis 25 menit.")
             menit = st.session_state.waktu_tersisa // 60
             detik = st.session_state.waktu_tersisa % 60
             st.markdown(f'<div style="text-align:center;"><p class="timer-kerja" style="color: #94A3B8;">{menit:02d}:{detik:02d}</p></div>', unsafe_allow_html=True)
