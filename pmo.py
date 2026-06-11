@@ -5,7 +5,7 @@ import time
 # 0. KONFIGURASI HALAMAN
 # ==========================================
 st.set_page_config(
-    page_title="Life Balance by Adyan.Dev", 
+    page_title="Life Balance Technic by Adyan.Dev", 
     page_icon="⏱️", 
     layout="wide"
 )
