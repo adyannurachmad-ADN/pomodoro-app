@@ -54,7 +54,7 @@ if check_password():
     if "durasi_istirahat" not in st.session_state:
         st.session_state.durasi_istirahat = 5 * 60
 
-    # JALUR DIREKTORI RAW GITHUB MILIK ANDA
+    # JALUR DIREKTORI RAW GITHUB ASSET ANDA
     url_animasi_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/river-flow.gif"
     url_suara_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/stream-3.mp3"
     url_suara_es = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/ice-cracking-01.mp3"
@@ -71,42 +71,39 @@ if check_password():
             margin: 10px 0;
         }
         .timer-break-layar {
-            /* SOLUSI PERTAMA: Memperkecil angka jam agar setara dengan tinggi gambar baru */
             font-size: 100px !important; 
             font-weight: bold;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             color: #10B981;
             text-align: center;
             margin: 0px 0;
-            padding-top: 10px; /* Menyesuaikan jarak vertikal */
+            padding-top: 40px; /* Menyelaraskan posisi vertikal jam dengan gambar di kanan */
         }
         </style>
     """, unsafe_allow_html=True)
 
     # ------------------------------------------------------------
-    # KONDISI A: MODE ISTIRAHAT (BREAK) - BERDAMPINGAN Side-by-Side (TERBARU)
+    # KONDISI A: MODE ISTIRAHAT (BREAK) - BERDAMPINGAN Side-by-Side
     # ------------------------------------------------------------
     if st.session_state.pomo_state == "BREAK":
         
         tipe_break = "LONG BREAK" if st.session_state.durasi_istirahat == 15 * 60 else "SHORT BREAK"
         st.markdown(f"<h3 style='text-align: center; color: #10B981; letter-spacing: 3px; padding-bottom: 20px;'>☕ {tipe_break} ACTIVE</h3>", unsafe_allow_html=True)
         
-        # Kita bagi layar menjadi dua kolom yang seimbang secara proporsional
+        # Layar dibagi dua kolom seimbang
         kolom_kiri_timer, kolom_kanan_animasi = st.columns([1, 1])
         
-        # Wadah countdown diletakkan di KOLOM KIRI
+        # Wadah countdown di KOLOM KIRI
         with kolom_kiri_timer:
             tempat_timer_break = st.empty()
             st.write("") 
 
-        # Animasi dan Audio diletakkan di KOLOM KANAN
+        # Animasi dan Audio di KOLOM KANAN
         with kolom_kanan_animasi:
             try:
-                # SOLUSI KEDUA & KETIGA: use_container_width=False
-                # Ini akan memuat gambar dengan skala aslinya, sehingga tinggi gambar proporsional
-                # dan seluruh frame sungai akan terlihat jelas tanpa terpotong bagian bawahnya.
-                st.image(url_animasi_air, width=450, caption="Rileks sejenak, nikmati aliran air sungai pegunungan...")
-
+                # --- SOLUSI TOTAL: Mengunci TINGGI (height) ke 350px ---
+                # Gambar otomatis mengecil proporsional dan tertarik naik, bebas dari potong bawah!
+                st.image(url_animasi_air, height=350, caption="Rileks sejenak, nikmati aliran air sungai pegunungan...")
             except Exception:
                 st.caption("Memuat gambar animasi lokal...")
             
@@ -119,7 +116,6 @@ if check_password():
         while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "BREAK":
             menit = st.session_state.waktu_tersisa // 60
             detik = st.session_state.waktu_tersisa % 60
-            # Jam berdetak di wadah di kolom kiri
             tempat_timer_break.markdown(f'<p class="timer-break-layar">{menit:02d}:{detik:02d}</p>', unsafe_allow_html=True)
             
             time.sleep(1)
@@ -161,7 +157,6 @@ if check_password():
             st.info("🔴 Sesi Kerja Sedang Berjalan. Fokus pada prioritas Anda.")
             tempat_timer = st.empty()
             
-            # Wadah tersembunyi khusus untuk memicu efek suara es retak pengingat transisi
             wadah_audio_es = st.empty()
             es_played = False
             
@@ -170,7 +165,7 @@ if check_password():
                 detik = st.session_state.waktu_tersisa % 60
                 tempat_timer.markdown(f'<p class="timer-kerja">{menit:02d}:{detik:02d}</p>', unsafe_allow_html=True)
                 
-                # --- MEMUTAR SUARA ES RETAK PADA 5 DETIK TERAKHIR ---
+                # --- PEMICU SUARA ES RETAK DI 5 DETIK TERAKHIR ---
                 if st.session_state.waktu_tersisa == 5 and not es_played:
                     try:
                         with wadah_audio_es:
