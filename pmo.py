@@ -105,7 +105,8 @@ if check_password():
                 # SOLUSI KEDUA & KETIGA: use_container_width=False
                 # Ini akan memuat gambar dengan skala aslinya, sehingga tinggi gambar proporsional
                 # dan seluruh frame sungai akan terlihat jelas tanpa terpotong bagian bawahnya.
-                st.image(url_animasi_air, use_container_width=False, caption="Rileks sejenak, nikmati aliran air sungai pegunungan...")
+                st.image(url_animasi_air, width=450, caption="Rileks sejenak, nikmati aliran air sungai pegunungan...")
+
             except Exception:
                 st.caption("Memuat gambar animasi lokal...")
             
