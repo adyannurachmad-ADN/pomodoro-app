@@ -5,7 +5,7 @@ import time
 # 0. KONFIGURASI HALAMAN UTAMA
 # ==========================================
 st.set_page_config(
-    page_title="Life Balance Technic by Adyan.Dev", 
+    page_title="Life Balance Technic", 
     page_icon="⏱️", 
     layout="wide"
 )
@@ -133,7 +133,7 @@ if check_password():
     else:
         kolom_judul, kolom_aksi = st.columns([3, 1])
         with kolom_judul:
-            st.title("⏱️ Pomodoro Timer")
+            st.title("⏱️ Pomodoro-River Flow by adyan.dev")
             st.caption(f"Life Balance Technic | Siklus Fokus Sukses: {st.session_state.siklus_selesai}")
             
         with kolom_aksi:
