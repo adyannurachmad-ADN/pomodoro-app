@@ -54,10 +54,11 @@ if check_password():
     if "durasi_istirahat" not in st.session_state:
         st.session_state.durasi_istirahat = 5 * 60
 
-    url_animasi_air = "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3M5dzR0bm5jM2ZpYndhZ3N0bm9mY3ZsczB0Z3R4dzR0bm5jM2ZpYndhZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YmYAMDycV5FzO/giphy.gif"
+    # JALUR DIREKTORI RAW GITHUB MILIK ANDA (SUDAH DISUAIKAN DENGAN NAMA GIF BARU)
+    url_animasi_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/river-flow.gif"
     url_suara_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/stream-3.mp3"
 
-    # Desain Gaya Font
+    # Desain Gaya Font Mode Kerja & Mode Istirahat
     st.markdown("""
         <style>
         .timer-kerja {
@@ -74,7 +75,7 @@ if check_password():
             font-family: 'Helvetica Neue', Arial, sans-serif;
             color: #10B981;
             text-align: center;
-            margin: 0px 0;
+            margin: 10px 0;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -87,17 +88,20 @@ if check_password():
         tipe_break = "LONG BREAK" if st.session_state.durasi_istirahat == 15 * 60 else "SHORT BREAK"
         st.markdown(f"<h3 style='text-align: center; color: #10B981; letter-spacing: 3px;'>☕ {tipe_break} ACTIVE</h3>", unsafe_allow_html=True)
         
-        _, kol_inti, _ = st.columns([1, 3, 1])
+        # Wadah countdown diletakkan paling atas agar tidak terhalang player audio
+        tempat_timer_break = st.empty()
         
+        _, kol_inti, _ = st.columns([1, 2, 1])
         with kol_inti:
-            st.image(url_animasi_air, use_container_width=True, caption="Rileks sejenak, nikmati aliran air sungai pegunungan...")
-            tempat_timer_break = st.empty()
+            try:
+                st.image(url_animasi_air, use_container_width=True, caption="Rileks sejenak, nikmati aliran air sungai pegunungan...")
+            except Exception:
+                st.caption("Memuat gambar animasi lokal...")
             
-            # Dibungkus try-except agar jika file audio bermasalah, aplikasi tidak crash
             try:
                 st.audio(url_suara_air, format="audio/mp3", autoplay=True, loop=True)
             except Exception:
-                st.warning("⚠️ Gagal memuat audio latar belakang, namun timer tetap berjalan.")
+                st.warning("⚠️ Suara latar belakang tidak dapat dimuat.")
             
         while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "BREAK":
             menit = st.session_state.waktu_tersisa // 60
