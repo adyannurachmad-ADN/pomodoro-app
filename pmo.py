@@ -54,11 +54,7 @@ if check_password():
     if "durasi_istirahat" not in st.session_state:
         st.session_state.durasi_istirahat = 5 * 60
 
-    # Tautan Animasi GIF Air Mengalir Sesuai Target Sesi
     url_animasi_air = "https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3M5dzR0bm5jM2ZpYndhZ3N0bm9mY3ZsczB0Z3R4dzR0bm5jM2ZpYndhZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/YmYAMDycV5FzO/giphy.gif"
-    
-    # 🔗 DIUBAH KE JALUR RAW GITHUB PROYEK ANDA SENDIRI
-    # Catatan: Jika nama file mp3 yang Anda upload bukan 'stream-3.mp3', silakan ganti bagian ujungnya saja
     url_suara_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/stream-3.mp3"
 
     # Desain Gaya Font
@@ -94,18 +90,18 @@ if check_password():
         _, kol_inti, _ = st.columns([1, 3, 1])
         
         with kol_inti:
-            # Pemuatan Animasi Aliran Air Sungai
             st.image(url_animasi_air, use_container_width=True, caption="Rileks sejenak, nikmati aliran air sungai pegunungan...")
-            
             tempat_timer_break = st.empty()
             
-            # Pemutar Audio Komponen Native Menggunakan Tautan Raw Proyek GitHub Anda
-            st.audio(url_suara_air, format="audio/mp3", autoplay=True, loop=True)
+            # Dibungkus try-except agar jika file audio bermasalah, aplikasi tidak crash
+            try:
+                st.audio(url_suara_air, format="audio/mp3", autoplay=True, loop=True)
+            except Exception:
+                st.warning("⚠️ Gagal memuat audio latar belakang, namun timer tetap berjalan.")
             
         while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "BREAK":
             menit = st.session_state.waktu_tersisa // 60
             detik = st.session_state.waktu_tersisa % 60
-            
             tempat_timer_break.markdown(f'<p class="timer-break-layar">{menit:02d}:{detik:02d}</p>', unsafe_allow_html=True)
             
             time.sleep(1)
