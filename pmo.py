@@ -5,7 +5,7 @@ import time
 # 0. KONFIGURASI HALAMAN UTAMA
 # ==========================================
 st.set_page_config(
-    page_title="Life Balance Technic by Adyan.Dev", 
+    page_title="Life Balance Technic", 
     page_icon="⏱️", 
     layout="wide"
 )
@@ -54,7 +54,7 @@ if check_password():
     if "durasi_istirahat" not in st.session_state:
         st.session_state.durasi_istirahat = 5 * 60
 
-    # JALUR DIREKTORI RAW GITHUB MILIK ANDA (SUDAH DISUAIKAN DENGAN NAMA GIF BARU)
+    # JALUR DIREKTORI RAW GITHUB MILIK ANDA
     url_animasi_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/river-flow.gif"
     url_suara_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/stream-3.mp3"
 
@@ -70,39 +70,48 @@ if check_password():
             margin: 10px 0;
         }
         .timer-break-layar {
-            font-size: 120px !important;
+            font-size: 150px !important; /* Ukuran font jam diperbesar sedikit agar setara dengan tinggi gambar */
             font-weight: bold;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             color: #10B981;
             text-align: center;
-            margin: 10px 0;
+            margin: 0px 0;
+            padding-top: 50px; /* Jarak agar teks jam sejajar tengah secara vertikal dengan gambar */
         }
         </style>
     """, unsafe_allow_html=True)
 
     # ------------------------------------------------------------
-    # KONDISI A: MODE ISTIRAHAT (BREAK)
+    # KONDISI A: MODE ISTIRAHAT (BREAK) - SUDAH DIUBAH MENJADI BERDAMPINGAN
     # ------------------------------------------------------------
     if st.session_state.pomo_state == "BREAK":
         
         tipe_break = "LONG BREAK" if st.session_state.durasi_istirahat == 15 * 60 else "SHORT BREAK"
-        st.markdown(f"<h3 style='text-align: center; color: #10B981; letter-spacing: 3px;'>☕ {tipe_break} ACTIVE</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align: center; color: #10B981; letter-spacing: 3px; padding-bottom: 20px;'>☕ {tipe_break} ACTIVE</h3>", unsafe_allow_html=True)
         
-        # Wadah countdown diletakkan paling atas agar tidak terhalang player audio
-        tempat_timer_break = st.empty()
+        # --- MEMBUAT TAMPILAN BERDAMPINGAN (SIDE BY SIDE) ---
+        # Kita bagi layar menjadi dua kolom dengan rasio lebar 1:1
+        kolom_kiri_timer, kolom_kanan_animasi = st.columns([1, 1])
         
-        _, kol_inti, _ = st.columns([1, 2, 1])
-        with kol_inti:
+        # Wadah countdown diletakkan di KOLOM KIRI
+        with kolom_kiri_timer:
+            tempat_timer_break = st.empty()
+            st.write("") # Memberi sedikit jarak
+
+        # Animasi dan Audio diletakkan di KOLOM KANAN
+        with kolom_kanan_animasi:
             try:
                 st.image(url_animasi_air, use_container_width=True, caption="Rileks sejenak, nikmati aliran air sungai pegunungan...")
             except Exception:
                 st.caption("Memuat gambar animasi lokal...")
             
             try:
+                # Komponen audio diletakkan di paling bawah kolom kanan agar tidak mengganggu layout
                 st.audio(url_suara_air, format="audio/mp3", autoplay=True, loop=True)
             except Exception:
                 st.warning("⚠️ Suara latar belakang tidak dapat dimuat.")
             
+        # Perulangan detik tetap berjalan di latar belakang
         while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "BREAK":
             menit = st.session_state.waktu_tersisa // 60
             detik = st.session_state.waktu_tersisa % 60
@@ -123,7 +132,7 @@ if check_password():
     else:
         kolom_judul, kolom_aksi = st.columns([3, 1])
         with kolom_judul:
-            st.title("⏱️ Pomodoro Timer")
+            st.title("⏱️ Pomodoro Timer by Adyan.Dev")
             st.caption(f"Life Balance Technic | Siklus Fokus Sukses: {st.session_state.siklus_selesai}")
             
         with kolom_aksi:
