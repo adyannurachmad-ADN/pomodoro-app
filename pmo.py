@@ -45,7 +45,7 @@ def check_password():
 # ==========================================
 if check_password():
     
-    # Inisialisasi State Aplikasi
+    # Inisialisasi State Utama Aplikasi
     if "pomo_state" not in st.session_state:
         st.session_state.pomo_state = "IDLE" 
     if "waktu_tersisa" not in st.session_state:
@@ -58,20 +58,19 @@ if check_password():
     # ==========================================
     # PENENTUAN JALUR ASSET (LOKAL SERVER & CADANGAN GITHUB)
     # ==========================================
-    # Mendeteksi lokasi absolut folder pmo.py berada di server Streamlit Cloud
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    # Jalur Absolut Lokal Server (Prioritas Utama - Menggunakan folder assets Anda)
+    # Jalur Absolut Lokal Server (Prioritas Utama)
     lokal_animasi_air = os.path.join(BASE_DIR, "assets", "river-flow.gif")
     lokal_suara_air = os.path.join(BASE_DIR, "assets", "stream-3.mp3")
     lokal_suara_es = os.path.join(BASE_DIR, "assets", "ice-cracking-01.mp3")
 
-    # URL Raw GitHub (Cadangan Akhir jika file lokal gagal dibaca)
+    # URL Raw GitHub (Cadangan Akhir / Fallback)
     url_animasi_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/river-flow.gif"
     url_suara_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/stream-3.mp3"
     url_suara_es = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/ice-cracking-01.mp3"
 
-    # Desain Gaya Font Mode Kerja & Mode Istirahat
+    # Desain Gaya Font Mode Kerja & Mode Istirahat via CSS
     st.markdown("""
         <style>
         .timer-kerja {
@@ -116,7 +115,7 @@ if check_password():
             with st.container():
                 st.markdown("""
                     <style>
-                    /* Memaksa GIF bawaan mengecil proporsional agar 1 frame utuh tidak terpotong bawah */
+                    /* Memaksa Gambar/GIF mengecil secara proporsional agar 1 frame utuh terlihat */
                     div[data-testid="stImage"] img {
                         max-height: 280px !important;
                         object-fit: contain !important;
@@ -127,7 +126,7 @@ if check_password():
                     </style>
                 """, unsafe_allow_html=True)
                 
-                # Membaca data biner file lokal 'river-flow.gif' dari folder assets
+                # Membaca data biner file lokal 'river-flow.gif'
                 if os.path.exists(lokal_animasi_air):
                     try:
                         with open(lokal_animasi_air, "rb") as file_:
@@ -138,7 +137,7 @@ if check_password():
                 else:
                     st.image(url_animasi_air, caption="Rileks sejenak, nikmati aliran air sungai...")
             
-            # --- RENDER AUDIO LATAR BELAKANG ---
+            # --- RENDER AUDIO AIR ---
             try:
                 if os.path.exists(lokal_suara_air):
                     st.audio(lokal_suara_air, format="audio/mp3", autoplay=True, loop=True)
@@ -147,7 +146,7 @@ if check_password():
             except Exception:
                 st.caption("🎵 Suara latar belakang sedang memuat...")
             
-        # Perulangan detik tetap berjalan
+        # Perulangan detik untuk hitung mundur Break
         while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "BREAK":
             menit = st.session_state.waktu_tersisa // 60
             detik = st.session_state.waktu_tersisa % 60
@@ -178,4 +177,53 @@ if check_password():
                 if st.button("🚀 DEPLOY", type="primary", use_container_width=True):
                     if st.session_state.pomo_state == "IDLE":
                         st.session_state.pomo_state = "FOCUS"
-                        st.session_state.waktu_tersisa =
+                        st.session_state.waktu_tersisa = 25 * 60
+                        st.rerun()
+            with sub2:
+                if st.button("🛑 STOP", type="secondary", use_container_width=True):
+                    st.session_state.pomo_state = "IDLE"
+                    st.session_state.waktu_tersisa = 25 * 60
+                    st.rerun()
+
+        st.write("---")
+
+        if st.session_state.pomo_state == "FOCUS":
+            st.info("🔴 Sesi Kerja Sedang Berjalan. Fokus pada prioritas Anda.")
+            tempat_timer = st.empty()
+            
+            wadah_audio_es = st.empty()
+            es_played = False
+            
+            # Perulangan detik untuk hitung mundur Fokus Kerja
+            while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "FOCUS":
+                menit = st.session_state.waktu_tersisa // 60
+                detik = st.session_state.waktu_tersisa % 60
+                tempat_timer.markdown(f'<p class="timer-kerja">{menit:02d}:{detik:02d}</p>', unsafe_allow_html=True)
+                
+                # --- PEMICU SUARA ES RETAK DI 5 DETIK TERAKHIR ---
+                if st.session_state.waktu_tersisa == 5 and not es_played:
+                    try:
+                        with wadah_audio_es:
+                            if os.path.exists(lokal_suara_es):
+                                st.audio(lokal_suara_es, format="audio/mp3", autoplay=True)
+                            else:
+                                st.audio(url_suara_es, format="audio/mp3", autoplay=True)
+                        es_played = True
+                    except Exception:
+                        pass
+                
+                time.sleep(1)
+                st.session_state.waktu_tersisa -= 1
+                
+            if st.session_state.waktu_tersisa <= 0 and st.session_state.pomo_state == "FOCUS":
+                st.session_state.siklus_selesai += 1
+                st.session_state.durasi_istirahat = 15 * 60 if st.session_state.siklus_selesai % 4 == 0 else 5 * 60
+                st.session_state.pomo_state = "BREAK"
+                st.session_state.waktu_tersisa = st.session_state.durasi_istirahat
+                st.rerun()
+                
+        else:
+            st.info("💡 Klik tombol **DEPLOY** untuk memulai siklus fokus otomatis 25 menit.")
+            menit = st.session_state.waktu_tersisa // 60
+            detik = st.session_state.waktu_tersisa % 60
+            st.markdown(f'<div style="text-align:center;"><p class="timer-kerja" style="color: #94A3B8;">{menit:02d}:{detik:02d}</p></div>', unsafe_allow_html=True)
