@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+import os
 
 # ==========================================
 # 0. KONFIGURASI HALAMAN UTAMA
@@ -54,10 +55,13 @@ if check_password():
     if "durasi_istirahat" not in st.session_state:
         st.session_state.durasi_istirahat = 5 * 60
 
-    # JALUR DIREKTORI RAW GITHUB ASSET ANDA
+    # JALUR DIREKTORI ASSET (UTAMA & CADANGAN)
     url_animasi_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/river-flow.gif"
     url_suara_air = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/stream-3.mp3"
     url_suara_es = "https://raw.githubusercontent.com/adyannurachmad-ADN/pomodoro-app/main/assets/ice-cracking-01.mp3"
+
+    # Jalur Cadangan Lokal jika dijalankan di server lokal/folder yang sama
+    lokal_animasi_air = "assets/river-flow.gif"
 
     # Desain Gaya Font Mode Kerja & Mode Istirahat
     st.markdown("""
@@ -77,7 +81,7 @@ if check_password():
             color: #10B981;
             text-align: center;
             margin: 0px 0;
-            padding-top: 40px; /* Menyelaraskan posisi vertikal jam dengan gambar di kanan */
+            padding-top: 40px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -100,17 +104,24 @@ if check_password():
 
         # Animasi dan Audio di KOLOM KANAN
         with kolom_kanan_animasi:
+            # --- SISTEM PROTEKSI UNTUK GAMBAR ANIMASI ---
             try:
-                # --- SOLUSI TOTAL: Mengunci TINGGI (height) ke 350px ---
-                # Gambar otomatis mengecil proporsional dan tertarik naik, bebas dari potong bawah!
-                st.image(url_animasi_air, height=350, caption="Rileks sejenak, nikmati aliran air sungai pegunungan...")
-            except Exception:
-                st.caption("Memuat gambar animasi lokal...")
+                # Cek apakah file lokal tersedia terlebih dahulu demi kecepatan load pasca-reboot
+                if os.path.exists(lokal_animasi_air):
+                    st.image(lokal_animasi_air, use_container_width=True, caption="Rileks sejenak, nikmati aliran air (Lokal)...")
+                else:
+                    # Jika lokal tidak ada, ambil dari GitHub dengan parameter container width yang responsif
+                    st.image(url_animasi_air, use_container_width=True, caption="Rileks sejenak, nikmati aliran air sungai pegunungan...")
+            except Exception as e:
+                # Tampilan Fallback jika GitHub memblokir request pasca-reboot
+                st.warning("⚠️ Gagal memuat animasi dari server GitHub.")
+                st.info("💡 Tips: Lakukan Hard Refresh (Ctrl+F5) pada browser Anda.")
             
+            # --- SISTEM PROTEKSI AUDIO AIR ---
             try:
                 st.audio(url_suara_air, format="audio/mp3", autoplay=True, loop=True)
             except Exception:
-                st.warning("⚠️ Suara latar belakang tidak dapat dimuat.")
+                st.caption("🎵 Suara latar belakang sedang tersinkronisasi...")
             
         # Perulangan detik tetap berjalan
         while st.session_state.waktu_tersisa > 0 and st.session_state.pomo_state == "BREAK":
